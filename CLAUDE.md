@@ -76,7 +76,9 @@ npm run dev      # levanta la app en local
    `src/engine/recipes.ts` tipado con `Recipe`.
 3. ✅ Perfil de molino por clics (`src/engine/grinder.ts`).
 4. ✅ Estimación de temperatura Newton (`src/engine/temperature.ts`).
-5. ⬜ UI: portar interfaz consumiendo `getBrewState()` en vez de la lógica
-   vieja mezclada.
-6. ⬜ Bitácora de catas (H5).
-7. ⬜ Wrap con Capacitor para Android nativo.
+5. ✅ UI de brew (SETUP → prep → cronómetro guiado → finalizar manual),
+   consumiendo `getBrewState()` en vez de la lógica vieja mezclada.
+6. ⬜ Exponer H3 (molino) y H4 (temperatura) en la UI — hoy solo viven en
+   el engine, la pantalla de SETUP no las muestra.
+7. ⬜ Bitácora de catas (H5).
+8. ⬜ Wrap con Capacitor para Android nativo.
