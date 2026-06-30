@@ -21,6 +21,7 @@ import { CoffeeBagsScreen } from "./CoffeeBagsScreen";
 import { loadProfile } from "./equipmentProfile";
 import { addEntry, TASTE_OPTS, type JournalEntry } from "./journal";
 import { searchCoffeeBags } from "../engine/coffeeBags";
+import { getGrindSuggestion } from "../engine/grindSuggestion";
 import { loadCoffeeBags, saveCoffeeBag } from "./coffeeBagsStore";
 
 /** Cada cuánto refrescamos la vista (ms). El reloj real es Date.now(). */
@@ -577,6 +578,14 @@ export class BrewScreen {
       saveCoffeeBag({ id: coffeeBagId, name: this.pendingBagName, brand: "" });
     }
 
+    // Sugerencia de molienda (H7): tiempo real vs el objetivo de la receta
+    // (targetTotalSeconds incluye el drawdown, comparable con finishElapsed).
+    const suggestion = getGrindSuggestion({
+      actualSeconds: this.finishElapsed,
+      expectedSeconds: recipe.targetTotalSeconds,
+      tastes: [...this.tastes],
+    });
+
     const entry: JournalEntry = {
       id: Date.now(),
       date: new Date().toISOString(),
@@ -590,8 +599,10 @@ export class BrewScreen {
       notes: this.refs!.notesF.value.trim(),
     };
     if (coffeeBagId) entry.coffeeBagId = coffeeBagId;
+    if (suggestion) entry.suggestion = suggestion;
 
     addEntry(entry);
+    if (suggestion) showToast(`💡 ${suggestion.reason}`);
     this.cancelBrew(); // limpia y vuelve a SETUP
   }
 
@@ -649,4 +660,20 @@ export function recipeTotalDuration(recipe: Recipe): number {
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
+}
+
+/**
+ * Toast a nivel de body (sobrevive al cambio de pantalla a SETUP). Se usa
+ * para mostrar la sugerencia de molienda en fresco tras guardar la cata.
+ */
+function showToast(message: string): void {
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.textContent = message;
+  document.body.append(t);
+  requestAnimationFrame(() => t.classList.add("show"));
+  window.setTimeout(() => {
+    t.classList.remove("show");
+    window.setTimeout(() => t.remove(), 350);
+  }, 5000);
 }

@@ -2,6 +2,8 @@
 // Las entradas nuevas van al principio (las más recientes arriba). Es el
 // puente entre el formulario de FIN (que escribe) y JournalScreen (que lee).
 
+import type { GrindSuggestion } from "../engine/grindSuggestion";
+
 const STORAGE_KEY = "brewlab:journal";
 
 /** Perfiles de sabor disponibles en el formulario de cata (multi-selección). */
@@ -28,6 +30,7 @@ export interface JournalEntry {
   grind: string;
   notes: string;
   coffeeBagId?: string; // referencia opcional a una CoffeeBag (H6)
+  suggestion?: GrindSuggestion; // ajuste de molienda sugerido al guardar (H7)
 }
 
 /** Lista guardada (más recientes primero), o [] si no hay nada / dato inválido. */

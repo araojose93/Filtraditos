@@ -35,6 +35,12 @@ export interface Recipe {
    * El clic final se resuelve con `getGrindClick()` (clamp a [1, grinderClicks]).
    */
   recommendedClickOffset: number;
+  /**
+   * Tiempo total esperado en segundos, INCLUYENDO el drawdown (no solo el
+   * último vertido). Es el objetivo contra el que se compara el tiempo real
+   * para sugerir ajustes de molienda (H7).
+   */
+  targetTotalSeconds: number;
 }
 
 /**

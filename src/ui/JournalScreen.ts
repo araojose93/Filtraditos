@@ -105,6 +105,10 @@ export function entryCardHtml(
     ? `<div class="enote">"${escapeHtml(en.notes)}"</div>`
     : "";
 
+  const sugg = en.suggestion
+    ? `<div class="esugg">💡 ${escapeHtml(en.suggestion.reason)}</div>`
+    : "";
+
   const del = opts.withDelete
     ? `<button class="del" data-id="${en.id}">eliminar</button>`
     : "";
@@ -121,6 +125,7 @@ export function entryCardHtml(
       <div class="emeta">${meta}</div>
       ${tastes}
       ${notes}
+      ${sugg}
       ${del}
     </div>`;
 }

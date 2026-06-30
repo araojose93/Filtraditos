@@ -945,6 +945,17 @@ body.brew-pour .instruction .it b {
   line-height: 1.45;
   font-style: italic;
 }
+/* sugerencia de molienda (H7) destacada en ámbar suave */
+.entry .esugg {
+  margin-top: 9px;
+  background: #e0883c14;
+  border: 1px solid #e0883c40;
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 12.5px;
+  color: var(--amber-soft);
+  line-height: 1.4;
+}
 .entry .del {
   background: none;
   border: none;
@@ -1046,6 +1057,32 @@ body.brew-pour .instruction .it b {
 }
 .suggest .sug.create {
   color: var(--amber-soft);
+}
+
+/* toast (sugerencia en fresco tras guardar la cata) — texto largo, envuelve */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  width: calc(100% - 40px);
+  max-width: 360px;
+  background: var(--surface2);
+  border: 1px solid var(--amber);
+  color: var(--cream);
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0;
+  transition: 0.3s;
+  z-index: 50;
+  box-shadow: 0 8px 26px #00000060;
+  pointer-events: none;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 
 .hide {

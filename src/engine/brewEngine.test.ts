@@ -76,7 +76,7 @@ describe("getBrewState — comportamiento general", () => {
   });
 
   it("lanza error si la receta no tiene pasos", () => {
-    const empty: Recipe = { id: "vacia", name: "Vacía", ratio: 16, steps: [], recommendedClickOffset: 0 };
+    const empty: Recipe = { id: "vacia", name: "Vacía", ratio: 16, steps: [], recommendedClickOffset: 0, targetTotalSeconds: 0 };
     expect(() => getBrewState(empty, 15, 0)).toThrow();
   });
 });
