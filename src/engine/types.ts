@@ -29,4 +29,21 @@ export interface Recipe {
    * (H2: nada de dosis fija de ejemplo).
    */
   steps: RecipeStep[];
+  /**
+   * Molienda recomendada relativa al `baseClick` del perfil de molino (H3).
+   * 0 = usar el clic base, +1 = un clic más grueso, -1 = un clic más fino.
+   * El clic final se resuelve con `getGrindClick()` (clamp a [1, grinderClicks]).
+   */
+  recommendedClickOffset: number;
+}
+
+/**
+ * Perfil del molino del usuario (H3). No se asume "fino/medio/grueso": el
+ * molino tiene N clics y la app razona en números relativos al clic base.
+ */
+export interface EquipmentProfile {
+  /** Total de clics del molino (ej. 6). 1 = más fino, N = más grueso. */
+  grinderClicks: number;
+  /** Clic que el usuario usa para recetas estándar. */
+  baseClick: number;
 }

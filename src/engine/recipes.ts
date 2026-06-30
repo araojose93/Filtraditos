@@ -29,7 +29,7 @@ export function v60Facil(doseGrams: number): Recipe {
     },
   ];
 
-  return { id: "v60-facil", name: "V60 Fácil", ratio, steps };
+  return { id: "v60-facil", name: "V60 Fácil", ratio, steps, recommendedClickOffset: 0 };
 }
 
 /**
@@ -58,7 +58,7 @@ export function hoffmann(doseGrams: number): Recipe {
     { startAt: 75, pourDuration: 30, waterAmount: secondPour, label: "Segundo vertido (100%)" },
   ];
 
-  return { id: "hoffmann", name: "Hoffmann", ratio, steps };
+  return { id: "hoffmann", name: "Hoffmann", ratio, steps, recommendedClickOffset: 0 };
 }
 
 /**
@@ -80,7 +80,7 @@ export function tetsuKasuya46(doseGrams: number): Recipe {
     { startAt: 4 * POUR_INTERVAL, pourDuration: POUR_DURATION, waterAmount: phase2Each, label: "Vertido 5 (60%)" },
   ];
 
-  return { id: "tetsu-46", name: "Tetsu Kasuya 4:6", ratio, steps };
+  return { id: "tetsu-46", name: "Tetsu Kasuya 4:6", ratio, steps, recommendedClickOffset: 1 };
 }
 
 /** Registro de factories por id, para construir recetas por dosis. */
