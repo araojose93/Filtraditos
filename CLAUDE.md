@@ -80,7 +80,11 @@ npm run dev      # levanta la app en local
    consumiendo `getBrewState()` en vez de la lógica vieja mezclada.
 6. ✅ H3 en UI (Perfil de molino, ⚙️ Mi equipo).
 7. ✅ H4 en UI (pestaña de Agua, temperatura en vivo).
-8. ⬜ Bitácora de catas (H5) — registro de cada preparación: estrellas,
-   perfil de sabor, punto de molino usado, notas.
-9. ⬜ Wrap con Capacitor para Android (Wake Lock web → plugin nativo,
-   vibración → haptics nativo).
+8. ✅ H5 — Bitácora de catas (formulario + lista + persistencia).
+9. ✅ H6 — Ficha de café (búsqueda + preparación favorita).
+10. ⬜ H7 — Sugerencia automática de ajuste (ácido + colado rápido →
+    sugerir clic más fino).
+11. ⬜ H8 — Repetir brew con 1 clic de diferencia desde una entrada.
+12. ⬜ H9 — Confirmar peso real vertido al cerrar cada vertido.
+13. ⬜ Wrap con Capacitor para Android (Wake Lock web → plugin nativo,
+    vibración → haptics nativo).
