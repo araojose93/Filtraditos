@@ -16,7 +16,9 @@ import type { Recipe } from "../engine/types";
 import { RecipeSelector, RECIPE_META } from "./RecipeSelector";
 import { WaterScreen } from "./WaterScreen";
 import { ProfileScreen } from "./ProfileScreen";
+import { JournalScreen } from "./JournalScreen";
 import { loadProfile } from "./equipmentProfile";
+import { addEntry, TASTE_OPTS, type JournalEntry } from "./journal";
 
 /** Cada cuánto refrescamos la vista (ms). El reloj real es Date.now(). */
 const TICK_MS = 250;
@@ -24,7 +26,7 @@ const TICK_MS = 250;
 const RING_R = 124;
 const RING_CIRC = 2 * Math.PI * RING_R;
 
-type Mode = "setup" | "prep" | "brewing" | "water" | "profile";
+type Mode = "setup" | "prep" | "brewing" | "water" | "profile" | "journal";
 
 interface BrewRefs {
   live: HTMLElement;
@@ -45,10 +47,15 @@ interface BrewRefs {
   instrText: HTMLElement;
   upNext: HTMLElement;
   finishWrap: HTMLElement;
-  newBtn: HTMLElement;
   doneCoffee: HTMLElement;
   doneWater: HTMLElement;
   doneTime: HTMLElement;
+  starsF: HTMLElement;
+  tastesF: HTMLElement;
+  grindF: HTMLInputElement;
+  notesF: HTMLTextAreaElement;
+  discardBtn: HTMLElement;
+  saveEntryBtn: HTMLElement;
 }
 
 export class BrewScreen {
@@ -60,6 +67,10 @@ export class BrewScreen {
   private finishElapsed = 0;
   private finished = false;
   private manualRequested = false;
+
+  // Estado del formulario de cata (FIN).
+  private rating = 0;
+  private tastes = new Set<string>();
 
   private timer: number | null = null;
   private wakeLock: WakeLockSentinel | null = null;
@@ -78,8 +89,18 @@ export class BrewScreen {
       onStart: (recipeId, doseGrams) => this.showPrep(recipeId, doseGrams),
       onWater: () => this.showWater(),
       onProfile: () => this.showProfile(),
+      onJournal: () => this.showJournal(),
     });
     this.mount(selector.el);
+  }
+
+  // ── BITÁCORA (catas) ───────────────────────────────────
+
+  private showJournal(): void {
+    this.mode = "journal";
+    document.body.classList.remove("brew-pour", "brew-wait");
+    const journal = new JournalScreen({ onBack: () => this.showSetup() });
+    this.mount(journal.el);
   }
 
   // ── AGUA (temperatura en vivo) ─────────────────────────
@@ -161,6 +182,8 @@ export class BrewScreen {
     this.startTime = Date.now();
     this.finished = false;
     this.manualRequested = false;
+    this.rating = 0;
+    this.tastes.clear();
 
     this.mount(this.buildBrewingDom(this.recipe));
     void this.requestWakeLock();
@@ -199,7 +222,6 @@ export class BrewScreen {
       refs.live.classList.add("hide");
       refs.finishWrap.classList.add("hide");
       refs.doneBlock.classList.remove("hide");
-      refs.newBtn.classList.remove("hide");
       refs.doneCoffee.textContent = String(this.dose);
       refs.doneWater.textContent = String(Math.round(state.totalWater));
       refs.doneTime.textContent = formatClock(this.finishElapsed);
@@ -213,7 +235,6 @@ export class BrewScreen {
     // "Terminé el vertido" SOLO en el último paso de la receta.
     const onLastStep = state.stepIndex === steps.length - 1;
     refs.finishWrap.classList.toggle("hide", !onLastStep);
-    refs.newBtn.classList.add("hide");
 
     refs.modeWord.textContent = state.phase === "vierte" ? "Vierte" : "Espera";
     refs.bigTime.textContent = formatClock(state.elapsedSeconds);
@@ -322,17 +343,25 @@ export class BrewScreen {
       <div class="done-block hide" id="doneBlock">
         <div class="bigcheck"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9cc47f" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></div>
         <h2>¡Listo! ☕</h2>
-        <p class="sub">Deja drenar y sírvelo mientras está fresco.</p>
+        <p class="sub">Anótalo mientras lo tienes fresco.</p>
         <div class="statgrid">
           <div class="stat"><b id="doneCoffee">0</b><small>g café</small></div>
           <div class="stat"><b id="doneWater" style="color:var(--water)">0</b><small>g agua</small></div>
           <div class="stat"><b id="doneTime">0:00</b><small>tiempo</small></div>
         </div>
+
+        <div class="field"><label>¿Qué tal quedó?</label><div class="stars" id="starsF"></div></div>
+        <div class="field"><label>Perfil de sabor</label><div class="tastes" id="tastesF"></div></div>
+        <div class="field"><label>Punto del molino</label><input id="grindF" placeholder="ej. clic 4 de 6"></div>
+        <div class="field"><label>Notas (origen, tueste, qué cambiar)</label><textarea id="notesF" placeholder="ej. Geisha de Tolima, tueste medio. Salió un pelín ácido → probar 1 clic más fino."></textarea></div>
+
+        <div class="btn-row">
+          <button class="btn ghost" id="discardBtn">Descartar</button>
+          <button class="btn primary" id="saveEntryBtn">Guardar en bitácora</button>
+        </div>
       </div>
 
       <div class="spacer"></div>
-
-      <button class="btn primary hide" id="newBtn">Preparar otro</button>
 
       <div class="hide" id="finishWrap">
         <button class="btn ghost" id="finBtn">Terminé el vertido</button>
@@ -365,10 +394,15 @@ export class BrewScreen {
       instrText: q<HTMLElement>("instrText"),
       upNext: q<HTMLElement>("upNext"),
       finishWrap: q<HTMLElement>("finishWrap"),
-      newBtn: q<HTMLElement>("newBtn"),
       doneCoffee: q<HTMLElement>("doneCoffee"),
       doneWater: q<HTMLElement>("doneWater"),
       doneTime: q<HTMLElement>("doneTime"),
+      starsF: q<HTMLElement>("starsF"),
+      tastesF: q<HTMLElement>("tastesF"),
+      grindF: q<HTMLInputElement>("grindF"),
+      notesF: q<HTMLTextAreaElement>("notesF"),
+      discardBtn: q<HTMLElement>("discardBtn"),
+      saveEntryBtn: q<HTMLElement>("saveEntryBtn"),
     };
 
     q<HTMLElement>("cancelBtn").addEventListener("click", () => this.cancelBrew());
@@ -376,9 +410,66 @@ export class BrewScreen {
       this.manualRequested = true;
       this.tick(); // pasa a FIN de inmediato
     });
-    this.refs.newBtn.addEventListener("click", () => this.cancelBrew());
+
+    // Formulario de cata: prellenar molino y renderizar estrellas/sabores.
+    const profile = loadProfile();
+    const click = getGrindClick(profile, recipe.recommendedClickOffset);
+    this.refs.grindF.value = `clic ${click} de ${profile.grinderClicks}`;
+    this.renderStars();
+    this.renderTastes();
+    this.refs.discardBtn.addEventListener("click", () => this.cancelBrew());
+    this.refs.saveEntryBtn.addEventListener("click", () => this.saveEntry());
 
     return section;
+  }
+
+  // ── Formulario de cata (FIN) ───────────────────────────
+
+  private renderStars(): void {
+    const refs = this.refs!;
+    refs.starsF.innerHTML = [1, 2, 3, 4, 5]
+      .map((n) => `<span class="star${n <= this.rating ? " on" : ""}" data-n="${n}">★</span>`)
+      .join("");
+    refs.starsF.querySelectorAll<HTMLElement>(".star").forEach((star) => {
+      star.addEventListener("click", () => {
+        this.rating = Number(star.dataset.n);
+        this.renderStars();
+      });
+    });
+  }
+
+  private renderTastes(): void {
+    const refs = this.refs!;
+    refs.tastesF.innerHTML = TASTE_OPTS.map(
+      (t) => `<span class="taste${this.tastes.has(t) ? " on" : ""}" data-t="${t}">${t}</span>`
+    ).join("");
+    refs.tastesF.querySelectorAll<HTMLElement>(".taste").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const t = chip.dataset.t!;
+        if (this.tastes.has(t)) this.tastes.delete(t);
+        else this.tastes.add(t);
+        this.renderTastes();
+      });
+    });
+  }
+
+  private saveEntry(): void {
+    const recipe = this.recipe;
+    if (!recipe) return;
+    const entry: JournalEntry = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      recipe: recipe.name,
+      coffee: this.dose,
+      water: Math.round(this.dose * recipe.ratio),
+      time: formatClock(this.finishElapsed),
+      rating: this.rating,
+      tastes: [...this.tastes],
+      grind: this.refs!.grindF.value.trim(),
+      notes: this.refs!.notesF.value.trim(),
+    };
+    addEntry(entry);
+    this.cancelBrew(); // limpia y vuelve a SETUP
   }
 
   // ── Wake Lock (mantener pantalla encendida) ────────────

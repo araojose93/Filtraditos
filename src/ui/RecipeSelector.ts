@@ -44,6 +44,8 @@ export interface RecipeSelectorOptions {
   onWater: () => void;
   /** Navega a la pantalla de Perfil de equipo (molino). */
   onProfile: () => void;
+  /** Navega a la pantalla de Bitácora de catas. */
+  onJournal: () => void;
 }
 
 export class RecipeSelector {
@@ -70,6 +72,9 @@ export class RecipeSelector {
         <div class="dot"></div>
         <h1>Brew<b>Lab</b></h1>
         <span class="tag">V60</span>
+      </div>
+
+      <div class="tabs">
         <button class="equiptab" id="profileTab">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
           Mi equipo
@@ -77,6 +82,10 @@ export class RecipeSelector {
         <button class="watertab" id="waterTab">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s6 7 6 11a6 6 0 01-12 0c0-4 6-11 6-11z"/></svg>
           Agua
+        </button>
+        <button class="journaltab" id="journalTab">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h13a2 2 0 012 2v14H6a2 2 0 01-2-2zM4 4v16M9 8h7M9 12h7"/></svg>
+          Bitácora
         </button>
       </div>
 
@@ -128,6 +137,7 @@ export class RecipeSelector {
     });
     this.byId("waterTab").addEventListener("click", () => this.opts.onWater());
     this.byId("profileTab").addEventListener("click", () => this.opts.onProfile());
+    this.byId("journalTab").addEventListener("click", () => this.opts.onJournal());
   }
 
   private renderCards(): void {

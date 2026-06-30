@@ -422,6 +422,30 @@ h2 {
 .equiptab:active {
   transform: scale(0.97);
 }
+.journaltab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--cream);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 99px;
+  cursor: pointer;
+}
+.journaltab:active {
+  transform: scale(0.97);
+}
+/* fila de accesos (Perfil / Agua / Bitácora) bajo la marca en SETUP */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
 
 /* ── pestaña de Agua (port de s-water) ── */
 .note {
@@ -779,6 +803,147 @@ body.brew-pour .instruction .it b {
 .stat small {
   font-size: 11px;
   color: var(--faint);
+}
+
+/* ── formulario de cata (port del s-finish) ── */
+.field {
+  margin-bottom: 16px;
+  text-align: left;
+}
+.field label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.field input,
+.field textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 13px;
+  color: var(--cream);
+  font-family: var(--sans);
+  font-size: 15px;
+}
+.field textarea {
+  resize: vertical;
+  min-height: 74px;
+}
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--amber);
+}
+.stars {
+  display: flex;
+  gap: 8px;
+}
+.star {
+  font-size: 30px;
+  cursor: pointer;
+  color: var(--faint);
+  transition: 0.1s;
+}
+.star.on {
+  color: var(--amber);
+}
+.tastes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.taste {
+  font-size: 13px;
+  padding: 8px 13px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+.taste.on {
+  border-color: var(--amber);
+  background: #e0883c1a;
+  color: var(--amber-soft);
+}
+
+/* ── tarjetas de bitácora (port del s-journal) ── */
+.entry {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 15px;
+  margin-bottom: 12px;
+}
+.entry .eh {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.entry .en {
+  font-weight: 700;
+  font-size: 15px;
+}
+.entry .ed {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: 2px;
+}
+.entry .er {
+  font-size: 14px;
+  color: var(--amber);
+  white-space: nowrap;
+}
+.entry .emeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 9px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.entry .etastes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+}
+.entry .etag {
+  font-size: 10.5px;
+  color: var(--amber-soft);
+  background: #e0883c14;
+  border: 1px solid #e0883c2a;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+.entry .enote {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 9px;
+  line-height: 1.45;
+  font-style: italic;
+}
+.entry .del {
+  background: none;
+  border: none;
+  color: var(--faint);
+  font-size: 12px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+.empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--faint);
+}
+.empty svg {
+  margin-bottom: 14px;
+  opacity: 0.5;
 }
 
 .hide {
