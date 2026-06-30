@@ -1,45 +1,43 @@
-// Pantalla SETUP — portada del s-home del prototipo legacy (brand, coach
-// explainer, tarjetas de receta, stepper de dosis, summary). El copy de las
-// tarjetas (autor/descripción) se porta tal cual del prototipo: es contenido
-// de presentación, no lógica. El agua total sale del engine, no de aquí.
+// Pantalla SETUP — solo la decisión de "qué receta": tarjetas con su historia
+// breve y chips (ratio, vertidos, tiempo, molino), más el botón Preparar. La
+// dosis y el agua total se ajustan en PREP (siguiente paso), no aquí. El copy
+// de las tarjetas es presentación, no lógica — el engine no cambia.
 
 import { buildRecipe, type RecipeId } from "../engine/recipes";
-import { getBrewState } from "../engine/brewEngine";
 import { getGrindClick } from "../engine/grinder";
 import { recipeTotalDuration, formatClock } from "./BrewScreen";
 import { loadProfile } from "./equipmentProfile";
 
-const DOSE_MIN = 10;
-const DOSE_MAX = 30;
-const DOSE_DEFAULT = 15;
-
 /** Orden de presentación de las recetas. */
 const RECIPE_ORDER: RecipeId[] = ["v60-facil", "hoffmann", "tetsu-46"];
 
-/** Copy de presentación de cada receta (portado del prototipo). */
+/**
+ * Copy de presentación de cada receta. `desc` es la historia breve (el "por
+ * qué"); `grind` es la palabra de molienda usada en el checklist de PREP.
+ */
 export const RECIPE_META: Record<
   RecipeId,
   { author: string; desc: string; grind: string }
 > = {
   "v60-facil": {
     author: "para empezar",
-    desc: "Tres vertidos, perdona errores. Ideal mientras agarras pulso con la jarra.",
+    desc: "La receta sin complicaciones — ideal para empezar o cuando no quieres pensar mucho.",
     grind: "medio-grueso",
   },
   hoffmann: {
     author: "adaptación · 1 taza",
-    desc: "Bloom largo + dos vertidos + swirl. Claridad y dulzor. La favorita de muchos.",
+    desc: "La referencia del método V60 — bloom controlado y dos vertidos precisos, pensada para consistencia.",
     grind: "medio",
   },
   "tetsu-46": {
     author: "adaptación",
-    desc: "5 vertidos cada 45 s. Los 2 primeros mueven dulzor/acidez, los 3 últimos el cuerpo.",
+    desc: "El método de 5 vertidos que separa dulzor (primeros 2) de fuerza (últimos 3) — para ajustar el sabor sin cambiar la molienda.",
     grind: "medio-grueso",
   },
 };
 
 export interface RecipeSelectorOptions {
-  onStart: (recipeId: RecipeId, doseGrams: number) => void;
+  onStart: (recipeId: RecipeId) => void;
   /** Navega a la pestaña de Agua (temperatura). */
   onWater: () => void;
   /** Navega a la pantalla de Perfil de equipo (molino). */
@@ -54,18 +52,11 @@ export class RecipeSelector {
   readonly el: HTMLElement;
 
   private recipeId: RecipeId = "v60-facil";
-  private dose = DOSE_DEFAULT;
 
   constructor(private opts: RecipeSelectorOptions) {
     this.el = document.createElement("section");
     this.el.className = "screen";
     this.render();
-  }
-
-  /** Agua total estimada para la dosis actual, según el engine. */
-  private totalWater(): number {
-    const recipe = buildRecipe(this.recipeId, this.dose);
-    return getBrewState(recipe, this.dose, 0).totalWater;
   }
 
   private render(): void {
@@ -97,7 +88,7 @@ export class RecipeSelector {
 
       <div class="eyebrow">Tu laboratorio</div>
       <h2>¿Qué preparamos hoy?</h2>
-      <p class="sub">Elige receta, ajusta la dosis y deja que el reloj te guíe vertido a vertido.</p>
+      <p class="sub">Elige tu receta. La dosis y el agua las ajustas en el siguiente paso.</p>
 
       <div class="gear">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e0883c" stroke-width="2"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg>
@@ -109,22 +100,6 @@ export class RecipeSelector {
 
       <div class="cards" id="recipeCards"></div>
 
-      <div class="dose">
-        <div class="row">
-          <label>Dosis de café</label>
-          <div class="stepper">
-            <button id="doseMinus" aria-label="Menos café">−</button>
-            <div class="val"><span id="doseVal">${this.dose}</span><small> g</small></div>
-            <button id="dosePlus" aria-label="Más café">+</button>
-          </div>
-        </div>
-        <div class="summary">
-          <div class="w">Agua total<b id="sumWater">—</b></div>
-          <div>Ratio<b id="sumRatio">—</b></div>
-          <div>Molino<b id="sumGrind">—</b></div>
-        </div>
-      </div>
-
       <div class="spacer"></div>
 
       <button class="btn primary" id="startBtn">
@@ -134,12 +109,9 @@ export class RecipeSelector {
     `;
 
     this.renderCards();
-    this.updateSummary();
 
-    this.byId("doseMinus").addEventListener("click", () => this.changeDose(-1));
-    this.byId("dosePlus").addEventListener("click", () => this.changeDose(1));
     this.byId("startBtn").addEventListener("click", () => {
-      this.opts.onStart(this.recipeId, this.dose);
+      this.opts.onStart(this.recipeId);
     });
     this.byId("waterTab").addEventListener("click", () => this.opts.onWater());
     this.byId("profileTab").addEventListener("click", () => this.opts.onProfile());
@@ -148,12 +120,16 @@ export class RecipeSelector {
   }
 
   private renderCards(): void {
+    // La dosis vive en PREP; aquí solo necesitamos datos que no dependen de
+    // ella (nombre, ratio, nº de vertidos, duración, molino del perfil).
+    const profile = loadProfile();
     const cards = this.byId("recipeCards");
     cards.innerHTML = RECIPE_ORDER.map((id) => {
-      const recipe = buildRecipe(id, this.dose);
+      const recipe = buildRecipe(id, 15);
       const meta = RECIPE_META[id];
       const sel = id === this.recipeId ? " sel" : "";
       const total = recipeTotalDuration(recipe);
+      const click = getGrindClick(profile, recipe.recommendedClickOffset);
       return `
         <div class="card${sel}" data-id="${id}">
           <div class="rname">${recipe.name}</div>
@@ -163,33 +139,17 @@ export class RecipeSelector {
             <span class="chip w">1:${recipe.ratio}</span>
             <span class="chip">${recipe.steps.length} vertidos</span>
             <span class="chip">${formatClock(total)} aprox</span>
+            <span class="chip">clic ${click}</span>
           </div>
         </div>`;
     }).join("");
 
     cards.querySelectorAll<HTMLElement>(".card").forEach((card) => {
       card.addEventListener("click", () => {
-        const id = card.dataset.id as RecipeId;
-        this.recipeId = id;
+        this.recipeId = card.dataset.id as RecipeId;
         this.renderCards();
-        this.updateSummary();
       });
     });
-  }
-
-  private changeDose(delta: number): void {
-    this.dose = clamp(this.dose + delta, DOSE_MIN, DOSE_MAX);
-    this.byId("doseVal").textContent = String(this.dose);
-    this.renderCards();
-    this.updateSummary();
-  }
-
-  private updateSummary(): void {
-    const recipe = buildRecipe(this.recipeId, this.dose);
-    const click = getGrindClick(loadProfile(), recipe.recommendedClickOffset);
-    this.byId("sumWater").textContent = `${Math.round(this.totalWater())} g`;
-    this.byId("sumRatio").textContent = `1:${recipe.ratio}`;
-    this.byId("sumGrind").textContent = `clic ${click}`;
   }
 
   private byId(id: string): HTMLElement {
@@ -197,8 +157,4 @@ export class RecipeSelector {
     if (!el) throw new Error(`Falta #${id} en RecipeSelector`);
     return el;
   }
-}
-
-function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n));
 }

@@ -100,7 +100,7 @@ export class BrewScreen {
     this.mode = "setup";
     document.body.classList.remove("brew-pour", "brew-wait");
     const selector = new RecipeSelector({
-      onStart: (recipeId, doseGrams) => this.showPrep(recipeId, doseGrams),
+      onStart: (recipeId) => this.showPrep(recipeId),
       onWater: () => this.showWater(),
       onProfile: () => this.showProfile(),
       onJournal: () => this.showJournal(),
@@ -145,25 +145,16 @@ export class BrewScreen {
     this.mount(profile.el);
   }
 
-  // ── PREP (checklist "Monta el setup", port de s-prep) ──
+  // ── PREP (dosis + checklist "Monta el setup", port de s-prep) ──
 
-  private showPrep(recipeId: RecipeId, doseGrams: number): void {
+  private showPrep(recipeId: RecipeId): void {
     this.mode = "prep";
     document.body.classList.remove("brew-pour", "brew-wait");
 
-    const recipe = buildRecipe(recipeId, doseGrams);
-    const profile = loadProfile();
-    const click = getGrindClick(profile, recipe.recommendedClickOffset);
-    const grind = RECIPE_META[recipeId].grind;
-
-    // Pasos generados con datos reales (dosis, clic del engine), no texto fijo.
-    const steps = [
-      `Muele <b>${doseGrams} g</b> en <b>clic ~${click} de ${profile.grinderClicks}</b> (${grind}).`,
-      `Pon el filtro en la V60.`,
-      `Pasa el agua a la <b>gooseneck</b>.`,
-      `<b>Enjuaga el filtro</b> con agua caliente (quita el sabor a papel y calienta la V60).`,
-      `Echa el café, haz un huequito, pon la V60 sobre la jarra y <b>tara a 0</b>.`,
-    ];
+    const DOSE_MIN = 10;
+    const DOSE_MAX = 30;
+    let dose = 15;
+    const recipe = buildRecipe(recipeId, dose); // para el nombre/ratio fijos
 
     const section = document.createElement("section");
     section.className = "screen";
@@ -174,11 +165,24 @@ export class BrewScreen {
       </div>
       <div class="eyebrow">Antes de empezar</div>
       <h2>Monta el setup</h2>
-      <ol class="prep-list">
-        ${steps
-          .map((s, i) => `<li><span class="n">${i + 1}</span><span>${s}</span></li>`)
-          .join("")}
-      </ol>
+
+      <div class="dose">
+        <div class="row">
+          <label>Dosis de café</label>
+          <div class="stepper">
+            <button id="doseMinus" aria-label="Menos café">−</button>
+            <div class="val"><span id="doseVal">${dose}</span><small> g</small></div>
+            <button id="dosePlus" aria-label="Más café">+</button>
+          </div>
+        </div>
+        <div class="summary">
+          <div class="w">Agua total<b id="sumWater">—</b></div>
+          <div>Ratio<b id="sumRatio">1:${recipe.ratio}</b></div>
+        </div>
+      </div>
+
+      <ol class="prep-list" id="prepList"></ol>
+
       <div class="spacer"></div>
       <button class="btn primary" id="startTimerBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
@@ -187,13 +191,40 @@ export class BrewScreen {
       <p class="sub" style="text-align:center;margin-top:14px;font-size:12px">El reloj arranca con el bloom. La pantalla queda encendida todo el brew.</p>
     `;
 
-    section
-      .querySelector<HTMLElement>("#prepBack")!
-      .addEventListener("click", () => this.showSetup());
-    section
-      .querySelector<HTMLElement>("#startTimerBtn")!
-      .addEventListener("click", () => this.startBrew(recipeId, doseGrams));
+    const q = (id: string) => section.querySelector<HTMLElement>(`#${id}`)!;
 
+    // Recalcula agua total y checklist en vivo según la dosis actual.
+    const update = (): void => {
+      const r = buildRecipe(recipeId, dose);
+      const profile = loadProfile();
+      const click = getGrindClick(profile, r.recommendedClickOffset);
+      const grind = RECIPE_META[recipeId].grind;
+      q("sumWater").textContent = `${Math.round(getBrewState(r, dose, 0).totalWater)} g`;
+
+      const steps = [
+        `Muele <b>${dose} g</b> en <b>clic ~${click} de ${profile.grinderClicks}</b> (${grind}).`,
+        `Pon el filtro en la V60.`,
+        `Pasa el agua a la <b>gooseneck</b>.`,
+        `<b>Enjuaga el filtro</b> con agua caliente (quita el sabor a papel y calienta la V60).`,
+        `Echa el café, haz un huequito, pon la V60 sobre la jarra y <b>tara a 0</b>.`,
+      ];
+      q("prepList").innerHTML = steps
+        .map((s, i) => `<li><span class="n">${i + 1}</span><span>${s}</span></li>`)
+        .join("");
+    };
+
+    const setDose = (d: number): void => {
+      dose = clamp(d, DOSE_MIN, DOSE_MAX);
+      q("doseVal").textContent = String(dose);
+      update();
+    };
+
+    q("doseMinus").addEventListener("click", () => setDose(dose - 1));
+    q("dosePlus").addEventListener("click", () => setDose(dose + 1));
+    q("prepBack").addEventListener("click", () => this.showSetup());
+    q("startTimerBtn").addEventListener("click", () => this.startBrew(recipeId, dose));
+
+    update();
     this.mount(section);
   }
 
