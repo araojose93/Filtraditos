@@ -47,3 +47,22 @@ export interface EquipmentProfile {
   /** Clic que el usuario usa para recetas estándar. */
   baseClick: number;
 }
+
+/**
+ * Ficha de un café concreto (H6). Una bolsa que el usuario compró; las catas
+ * de la bitácora pueden referenciarla por `id` para saber con qué grano salió
+ * mejor cada preparación.
+ */
+export interface CoffeeBag {
+  id: string;
+  /** Nombre del café, ej. "Geisha Lavado". */
+  name: string;
+  /** Tostador / marca, ej. "Nakama Café". */
+  brand: string;
+  /** Origen, ej. "Tolima, Colombia". */
+  origin?: string;
+  /** Fecha de tueste (ISO), opcional. */
+  roastDate?: string;
+  /** Nivel de tueste en texto libre, ej. "claro", "medio", "oscuro". */
+  roastLevel?: string;
+}

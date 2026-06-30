@@ -439,6 +439,23 @@ h2 {
 .journaltab:active {
   transform: scale(0.97);
 }
+.coffeetab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid #f0a85c40;
+  color: var(--amber-soft);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 99px;
+  cursor: pointer;
+}
+.coffeetab:active {
+  transform: scale(0.97);
+}
 /* fila de accesos (Perfil / Agua / Bitácora) bajo la marca en SETUP */
 .tabs {
   display: flex;
@@ -944,6 +961,91 @@ body.brew-pour .instruction .it b {
 .empty svg {
   margin-bottom: 14px;
   opacity: 0.5;
+}
+
+/* ── fichas de café (H6) ── */
+.bagrow {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.bagrow:active {
+  transform: scale(0.99);
+}
+.bagrow .bn {
+  font-weight: 700;
+  font-size: 15px;
+}
+.bagrow .bb {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.bagmeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.fav {
+  background: #9cc47f12;
+  border: 1px solid #9cc47f40;
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin: 6px 0 18px;
+}
+.fav .favlbl {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--good);
+  margin-bottom: 6px;
+}
+.fav .favsum {
+  font-size: 14px;
+  color: var(--cream);
+  line-height: 1.45;
+}
+
+/* autocompletado de café en el formulario de cata (FIN) */
+.suggest {
+  margin-top: 6px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.suggest:empty {
+  display: none;
+}
+.suggest .sug {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: none;
+  padding: 11px 13px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.suggest .sug:first-child {
+  border-top: 1px solid var(--line);
+}
+.suggest .sug:active {
+  background: var(--surface2);
+}
+.suggest .sug .sb {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 8px;
+}
+.suggest .sug.create {
+  color: var(--amber-soft);
 }
 
 .hide {

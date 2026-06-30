@@ -16,9 +16,12 @@ import type { Recipe } from "../engine/types";
 import { RecipeSelector, RECIPE_META } from "./RecipeSelector";
 import { WaterScreen } from "./WaterScreen";
 import { ProfileScreen } from "./ProfileScreen";
-import { JournalScreen } from "./JournalScreen";
+import { JournalScreen, escapeHtml } from "./JournalScreen";
+import { CoffeeBagsScreen } from "./CoffeeBagsScreen";
 import { loadProfile } from "./equipmentProfile";
 import { addEntry, TASTE_OPTS, type JournalEntry } from "./journal";
+import { searchCoffeeBags } from "../engine/coffeeBags";
+import { loadCoffeeBags, saveCoffeeBag } from "./coffeeBagsStore";
 
 /** Cada cuánto refrescamos la vista (ms). El reloj real es Date.now(). */
 const TICK_MS = 250;
@@ -26,7 +29,14 @@ const TICK_MS = 250;
 const RING_R = 124;
 const RING_CIRC = 2 * Math.PI * RING_R;
 
-type Mode = "setup" | "prep" | "brewing" | "water" | "profile" | "journal";
+type Mode =
+  | "setup"
+  | "prep"
+  | "brewing"
+  | "water"
+  | "profile"
+  | "journal"
+  | "coffeebags";
 
 interface BrewRefs {
   live: HTMLElement;
@@ -54,6 +64,8 @@ interface BrewRefs {
   tastesF: HTMLElement;
   grindF: HTMLInputElement;
   notesF: HTMLTextAreaElement;
+  bagF: HTMLInputElement;
+  bagSuggest: HTMLElement;
   discardBtn: HTMLElement;
   saveEntryBtn: HTMLElement;
 }
@@ -71,6 +83,8 @@ export class BrewScreen {
   // Estado del formulario de cata (FIN).
   private rating = 0;
   private tastes = new Set<string>();
+  private selectedBagId: string | null = null; // ficha existente elegida
+  private pendingBagName: string | null = null; // ficha nueva a crear al guardar
 
   private timer: number | null = null;
   private wakeLock: WakeLockSentinel | null = null;
@@ -90,6 +104,7 @@ export class BrewScreen {
       onWater: () => this.showWater(),
       onProfile: () => this.showProfile(),
       onJournal: () => this.showJournal(),
+      onCoffeeBags: () => this.showCoffeeBags(),
     });
     this.mount(selector.el);
   }
@@ -101,6 +116,15 @@ export class BrewScreen {
     document.body.classList.remove("brew-pour", "brew-wait");
     const journal = new JournalScreen({ onBack: () => this.showSetup() });
     this.mount(journal.el);
+  }
+
+  // ── FICHAS DE CAFÉ (H6) ────────────────────────────────
+
+  private showCoffeeBags(): void {
+    this.mode = "coffeebags";
+    document.body.classList.remove("brew-pour", "brew-wait");
+    const bags = new CoffeeBagsScreen({ onBack: () => this.showSetup() });
+    this.mount(bags.el);
   }
 
   // ── AGUA (temperatura en vivo) ─────────────────────────
@@ -184,6 +208,8 @@ export class BrewScreen {
     this.manualRequested = false;
     this.rating = 0;
     this.tastes.clear();
+    this.selectedBagId = null;
+    this.pendingBagName = null;
 
     this.mount(this.buildBrewingDom(this.recipe));
     void this.requestWakeLock();
@@ -353,6 +379,11 @@ export class BrewScreen {
         <div class="field"><label>¿Qué tal quedó?</label><div class="stars" id="starsF"></div></div>
         <div class="field"><label>Perfil de sabor</label><div class="tastes" id="tastesF"></div></div>
         <div class="field"><label>Punto del molino</label><input id="grindF" placeholder="ej. clic 4 de 6"></div>
+        <div class="field">
+          <label>Café (opcional)</label>
+          <input id="bagF" placeholder="busca o crea una ficha…" autocomplete="off">
+          <div class="suggest" id="bagSuggest"></div>
+        </div>
         <div class="field"><label>Notas (origen, tueste, qué cambiar)</label><textarea id="notesF" placeholder="ej. Geisha de Tolima, tueste medio. Salió un pelín ácido → probar 1 clic más fino."></textarea></div>
 
         <div class="btn-row">
@@ -401,6 +432,8 @@ export class BrewScreen {
       tastesF: q<HTMLElement>("tastesF"),
       grindF: q<HTMLInputElement>("grindF"),
       notesF: q<HTMLTextAreaElement>("notesF"),
+      bagF: q<HTMLInputElement>("bagF"),
+      bagSuggest: q<HTMLElement>("bagSuggest"),
       discardBtn: q<HTMLElement>("discardBtn"),
       saveEntryBtn: q<HTMLElement>("saveEntryBtn"),
     };
@@ -417,10 +450,57 @@ export class BrewScreen {
     this.refs.grindF.value = `clic ${click} de ${profile.grinderClicks}`;
     this.renderStars();
     this.renderTastes();
+    this.refs.bagF.addEventListener("input", () => this.renderBagSuggestions());
     this.refs.discardBtn.addEventListener("click", () => this.cancelBrew());
     this.refs.saveEntryBtn.addEventListener("click", () => this.saveEntry());
 
     return section;
+  }
+
+  // Autocompletado de ficha de café en el formulario de cata (H6).
+  private renderBagSuggestions(): void {
+    const refs = this.refs!;
+    const query = refs.bagF.value.trim();
+
+    // Cualquier tecleo invalida la selección previa hasta volver a elegir.
+    this.selectedBagId = null;
+    this.pendingBagName = null;
+
+    if (!query) {
+      refs.bagSuggest.innerHTML = "";
+      return;
+    }
+
+    const matches = searchCoffeeBags(loadCoffeeBags(), query);
+    const exact = matches.some(
+      (b) => b.name.toLowerCase() === query.toLowerCase()
+    );
+
+    let html = matches
+      .map(
+        (b) =>
+          `<div class="sug" data-id="${b.id}" data-name="${escapeHtml(b.name)}">${escapeHtml(b.name)}<span class="sb">${escapeHtml(b.brand || "—")}</span></div>`
+      )
+      .join("");
+    if (!exact) {
+      html += `<div class="sug create" data-create="1">+ Crear ficha: ${escapeHtml(query)}</div>`;
+    }
+    refs.bagSuggest.innerHTML = html;
+
+    refs.bagSuggest.querySelectorAll<HTMLElement>(".sug").forEach((el) => {
+      el.addEventListener("click", () => {
+        if (el.dataset.create) {
+          this.pendingBagName = query;
+          this.selectedBagId = null;
+          refs.bagF.value = query;
+        } else {
+          this.selectedBagId = el.dataset.id ?? null;
+          this.pendingBagName = null;
+          refs.bagF.value = el.dataset.name ?? "";
+        }
+        refs.bagSuggest.innerHTML = "";
+      });
+    });
   }
 
   // ── Formulario de cata (FIN) ───────────────────────────
@@ -456,6 +536,16 @@ export class BrewScreen {
   private saveEntry(): void {
     const recipe = this.recipe;
     if (!recipe) return;
+
+    // Vínculo opcional con una ficha de café: existente, nueva, o ninguno.
+    let coffeeBagId: string | undefined;
+    if (this.selectedBagId) {
+      coffeeBagId = this.selectedBagId;
+    } else if (this.pendingBagName) {
+      coffeeBagId = "bag-" + Date.now();
+      saveCoffeeBag({ id: coffeeBagId, name: this.pendingBagName, brand: "" });
+    }
+
     const entry: JournalEntry = {
       id: Date.now(),
       date: new Date().toISOString(),
@@ -468,6 +558,8 @@ export class BrewScreen {
       grind: this.refs!.grindF.value.trim(),
       notes: this.refs!.notesF.value.trim(),
     };
+    if (coffeeBagId) entry.coffeeBagId = coffeeBagId;
+
     addEntry(entry);
     this.cancelBrew(); // limpia y vuelve a SETUP
   }

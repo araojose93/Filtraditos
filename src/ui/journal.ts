@@ -27,6 +27,7 @@ export interface JournalEntry {
   tastes: string[];
   grind: string;
   notes: string;
+  coffeeBagId?: string; // referencia opcional a una CoffeeBag (H6)
 }
 
 /** Lista guardada (más recientes primero), o [] si no hay nada / dato inválido. */

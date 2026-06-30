@@ -49,7 +49,9 @@ export class JournalScreen {
       return;
     }
 
-    this.listEl.innerHTML = list.map((en) => this.entryHtml(en)).join("");
+    this.listEl.innerHTML = list
+      .map((en) => entryCardHtml(en, { withDelete: true }))
+      .join("");
 
     this.listEl.querySelectorAll<HTMLElement>(".del").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -59,51 +61,6 @@ export class JournalScreen {
     });
   }
 
-  private entryHtml(en: JournalEntry): string {
-    const d = new Date(en.date);
-    const fecha =
-      d.toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" }) +
-      " · " +
-      d.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
-
-    const stars = en.rating
-      ? "★".repeat(en.rating) +
-        `<span style="color:var(--faint)">${"★".repeat(5 - en.rating)}</span>`
-      : "";
-
-    const meta = [
-      `<span>${en.coffee} g café</span>`,
-      `<span>${en.water} g agua</span>`,
-      en.time ? `<span>${en.time}</span>` : "",
-      en.grind ? `<span>⚙ ${escapeHtml(en.grind)}</span>` : "",
-    ].join("");
-
-    const tastes = en.tastes.length
-      ? `<div class="etastes">${en.tastes
-          .map((t) => `<span class="etag">${escapeHtml(t)}</span>`)
-          .join("")}</div>`
-      : "";
-
-    const notes = en.notes
-      ? `<div class="enote">"${escapeHtml(en.notes)}"</div>`
-      : "";
-
-    return `
-      <div class="entry">
-        <div class="eh">
-          <div>
-            <div class="en">${escapeHtml(en.recipe)}</div>
-            <div class="ed">${fecha}</div>
-          </div>
-          <div class="er">${stars}</div>
-        </div>
-        <div class="emeta">${meta}</div>
-        ${tastes}
-        ${notes}
-        <button class="del" data-id="${en.id}">eliminar</button>
-      </div>`;
-  }
-
   private q(id: string): HTMLElement {
     const el = this.el.querySelector<HTMLElement>(`#${id}`);
     if (!el) throw new Error(`Falta #${id} en JournalScreen`);
@@ -111,8 +68,65 @@ export class JournalScreen {
   }
 }
 
+/**
+ * HTML de una tarjeta de cata (reusada por la Bitácora y por el detalle de
+ * ficha de café). `withDelete` agrega el botón eliminar (el caller cablea el
+ * handler buscando `.del`).
+ */
+export function entryCardHtml(
+  en: JournalEntry,
+  opts: { withDelete?: boolean } = {}
+): string {
+  const d = new Date(en.date);
+  const fecha =
+    d.toLocaleDateString("es", { day: "2-digit", month: "short", year: "numeric" }) +
+    " · " +
+    d.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+
+  const stars = en.rating
+    ? "★".repeat(en.rating) +
+      `<span style="color:var(--faint)">${"★".repeat(5 - en.rating)}</span>`
+    : "";
+
+  const meta = [
+    `<span>${en.coffee} g café</span>`,
+    `<span>${en.water} g agua</span>`,
+    en.time ? `<span>${en.time}</span>` : "",
+    en.grind ? `<span>⚙ ${escapeHtml(en.grind)}</span>` : "",
+  ].join("");
+
+  const tastes = en.tastes.length
+    ? `<div class="etastes">${en.tastes
+        .map((t) => `<span class="etag">${escapeHtml(t)}</span>`)
+        .join("")}</div>`
+    : "";
+
+  const notes = en.notes
+    ? `<div class="enote">"${escapeHtml(en.notes)}"</div>`
+    : "";
+
+  const del = opts.withDelete
+    ? `<button class="del" data-id="${en.id}">eliminar</button>`
+    : "";
+
+  return `
+    <div class="entry">
+      <div class="eh">
+        <div>
+          <div class="en">${escapeHtml(en.recipe)}</div>
+          <div class="ed">${fecha}</div>
+        </div>
+        <div class="er">${stars}</div>
+      </div>
+      <div class="emeta">${meta}</div>
+      ${tastes}
+      ${notes}
+      ${del}
+    </div>`;
+}
+
 /** Escapa texto del usuario antes de meterlo como HTML. */
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

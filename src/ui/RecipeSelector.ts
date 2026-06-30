@@ -46,6 +46,8 @@ export interface RecipeSelectorOptions {
   onProfile: () => void;
   /** Navega a la pantalla de Bitácora de catas. */
   onJournal: () => void;
+  /** Navega a la pantalla de Fichas de café. */
+  onCoffeeBags: () => void;
 }
 
 export class RecipeSelector {
@@ -86,6 +88,10 @@ export class RecipeSelector {
         <button class="journaltab" id="journalTab">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h13a2 2 0 012 2v14H6a2 2 0 01-2-2zM4 4v16M9 8h7M9 12h7"/></svg>
           Bitácora
+        </button>
+        <button class="coffeetab" id="coffeeTab">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h13v5a5 5 0 01-5 5H9a5 5 0 01-5-5zM17 9h2a2 2 0 010 4h-2"/></svg>
+          Mis cafés
         </button>
       </div>
 
@@ -138,6 +144,7 @@ export class RecipeSelector {
     this.byId("waterTab").addEventListener("click", () => this.opts.onWater());
     this.byId("profileTab").addEventListener("click", () => this.opts.onProfile());
     this.byId("journalTab").addEventListener("click", () => this.opts.onJournal());
+    this.byId("coffeeTab").addEventListener("click", () => this.opts.onCoffeeBags());
   }
 
   private renderCards(): void {
