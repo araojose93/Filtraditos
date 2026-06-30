@@ -7,6 +7,7 @@ import type { CoffeeBag } from "./types";
 
 /** Forma mínima de una cata que getBestEntryForBag necesita leer. */
 export interface BagLinkedEntry {
+  id: number;
   date: string; // ISO — desempata "más reciente"
   rating: number; // 1-5
   coffeeBagId?: string;
@@ -27,16 +28,25 @@ export function searchCoffeeBags(bags: CoffeeBag[], query: string): CoffeeBag[] 
 }
 
 /**
- * La cata de mayor rating vinculada a una ficha. Empate de rating → la más
- * reciente (por `date`). Sin catas vinculadas → undefined. Genérico para no
- * acoplar el engine al tipo JournalEntry de la UI.
+ * La preparación favorita de una ficha entre sus catas vinculadas:
+ *   1. Si la ficha tiene `favoriteEntryId` y esa cata existe → esa (gana sobre
+ *      el rating, es una elección explícita del usuario).
+ *   2. Si no → mayor rating; empate → la más reciente (por `date`).
+ *   3. Sin catas vinculadas → undefined.
+ * Genérico para no acoplar el engine al tipo JournalEntry de la UI.
  */
 export function getBestEntryForBag<T extends BagLinkedEntry>(
-  bagId: string,
+  bag: CoffeeBag,
   journalEntries: T[]
 ): T | undefined {
-  const linked = journalEntries.filter((e) => e.coffeeBagId === bagId);
+  const linked = journalEntries.filter((e) => e.coffeeBagId === bag.id);
   if (linked.length === 0) return undefined;
+
+  if (bag.favoriteEntryId) {
+    const marked = linked.find((e) => String(e.id) === bag.favoriteEntryId);
+    if (marked) return marked; // la marcada gana, ignora rating
+  }
+
   return linked.reduce((best, e) => {
     if (e.rating > best.rating) return e;
     if (e.rating === best.rating && e.date > best.date) return e;

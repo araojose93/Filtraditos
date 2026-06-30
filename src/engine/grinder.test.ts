@@ -1,9 +1,24 @@
 import { describe, it, expect } from "vitest";
-import { getGrindClick } from "./grinder";
+import { getGrindClick, adjustGrindClick } from "./grinder";
 import { v60Facil, hoffmann, tetsuKasuya46 } from "./recipes";
 import type { EquipmentProfile } from "./types";
 
 const molino6: EquipmentProfile = { grinderClicks: 6, baseClick: 3 };
+
+describe("adjustGrindClick — ajuste relativo al clic usado (H8)", () => {
+  it("más fino baja 1 clic", () => {
+    expect(adjustGrindClick(3, -1, 6)).toBe(2);
+  });
+  it("más grueso sube 1 clic", () => {
+    expect(adjustGrindClick(3, 1, 6)).toBe(4);
+  });
+  it("no baja de 1 (clamp inferior)", () => {
+    expect(adjustGrindClick(1, -1, 6)).toBe(1);
+  });
+  it("no sube del total del molino (clamp superior)", () => {
+    expect(adjustGrindClick(6, 1, 6)).toBe(6);
+  });
+});
 
 describe("getGrindClick — resuelve el clic relativo al perfil", () => {
   it("offset 0 usa el clic base", () => {

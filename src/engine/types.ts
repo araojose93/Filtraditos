@@ -71,4 +71,10 @@ export interface CoffeeBag {
   roastDate?: string;
   /** Nivel de tueste en texto libre, ej. "claro", "medio", "oscuro". */
   roastLevel?: string;
+  /**
+   * Id (como string) de la entrada de bitácora marcada como favorita
+   * explícitamente. Si está presente y la entrada existe, gana sobre el
+   * cálculo por rating (H8+).
+   */
+  favoriteEntryId?: string;
 }

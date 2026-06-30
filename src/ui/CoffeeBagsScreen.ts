@@ -6,11 +6,13 @@
 import { searchCoffeeBags, getBestEntryForBag } from "../engine/coffeeBags";
 import type { CoffeeBag } from "../engine/types";
 import { loadCoffeeBags, saveCoffeeBag } from "./coffeeBagsStore";
-import { loadJournal } from "./journal";
+import { loadJournal, type JournalEntry } from "./journal";
 import { entryCardHtml, escapeHtml } from "./JournalScreen";
 
 export interface CoffeeBagsScreenOptions {
   onBack: () => void;
+  /** Preparar la receta de la cata favorita (clona receta + dosis, sin ajuste). */
+  onPrepareRecipe: (entry: JournalEntry) => void;
 }
 
 export class CoffeeBagsScreen {
@@ -93,7 +95,7 @@ export class CoffeeBagsScreen {
 
     const entries = loadJournal();
     const linked = entries.filter((e) => e.coffeeBagId === bag.id);
-    const best = getBestEntryForBag(bag.id, entries);
+    const best = getBestEntryForBag(bag, entries);
 
     const datos = [
       bag.origin ? `<span>📍 ${escapeHtml(bag.origin)}</span>` : "",
@@ -109,6 +111,7 @@ export class CoffeeBagsScreen {
            <div class="favsum">${escapeHtml(best.recipe)}, ratio 1:${(
           best.water / best.coffee
         ).toFixed(1)}, ${escapeHtml(best.grind || "—")} — ${starsInline(best.rating)}</div>
+           <button class="btn ghost" id="prepRecipe" style="margin-top:12px">Preparar esta receta</button>
          </div>`
       : `<div class="fav">
            <div class="favsum">Aún no tienes catas con este café.</div>
@@ -116,7 +119,14 @@ export class CoffeeBagsScreen {
          </div>`;
 
     const linkedList = linked.length
-      ? linked.map((en) => entryCardHtml(en)).join("")
+      ? linked
+          .map((en) =>
+            entryCardHtml(en, {
+              withFavorite: true,
+              currentFavoriteId: bag.favoriteEntryId,
+            })
+          )
+          .join("")
       : "";
 
     this.el.innerHTML = `
@@ -136,10 +146,28 @@ export class CoffeeBagsScreen {
     `;
 
     this.q("detailBack").addEventListener("click", () => this.showList());
+
+    // Sin favorita: "Preparar este café" vuelve a SETUP (no hay receta concreta).
     const prep = this.el.querySelector<HTMLElement>("#prepBag");
-    // "Preparar este café" no enlaza a una receta concreta todavía: vuelve a
-    // SETUP, desde donde el usuario elige receta y dosis.
     if (prep) prep.addEventListener("click", () => this.opts.onBack());
+
+    // Con favorita: "Preparar esta receta" clona receta + dosis de la mejor cata.
+    const prepRecipe = this.el.querySelector<HTMLElement>("#prepRecipe");
+    if (prepRecipe && best) {
+      prepRecipe.addEventListener("click", () => this.opts.onPrepareRecipe(best));
+    }
+
+    // Marcar una cata vinculada como favorita de la ficha.
+    this.el.querySelectorAll<HTMLElement>(".markfav").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = Number(btn.dataset.id);
+        const fresh = loadCoffeeBags().find((b) => b.id === bag.id);
+        if (!fresh) return;
+        fresh.favoriteEntryId = String(id);
+        saveCoffeeBag(fresh);
+        this.showDetail(bag.id); // refresca; el bloque favorita se actualiza
+      });
+    });
   }
 
   // ── FORMULARIO de alta ─────────────────────────────────

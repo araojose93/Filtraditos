@@ -15,3 +15,16 @@ export function getGrindClick(profile: EquipmentProfile, offset: number): number
   const target = profile.baseClick + offset;
   return Math.min(profile.grinderClicks, Math.max(1, target));
 }
+
+/**
+ * Ajusta un clic CONCRETO en `delta` pasos (ej. -1 más fino, +1 más grueso),
+ * recortado a [1, grinderClicks]. Para "repetir con ajuste" (H8): el ajuste es
+ * relativo al clic que realmente se usó, no al baseClick del perfil.
+ */
+export function adjustGrindClick(
+  currentClick: number,
+  delta: number,
+  grinderClicks: number
+): number {
+  return Math.min(grinderClicks, Math.max(1, currentClick + delta));
+}

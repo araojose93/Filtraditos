@@ -956,13 +956,39 @@ body.brew-pour .instruction .it b {
   color: var(--amber-soft);
   line-height: 1.4;
 }
+.entry .eactions {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+}
+.entry .repeat {
+  background: none;
+  border: none;
+  color: var(--amber-soft);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+.entry .markfav {
+  background: none;
+  border: none;
+  color: var(--amber-soft);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+.entry .favmark {
+  color: var(--amber);
+  font-size: 12px;
+  font-weight: 700;
+}
 .entry .del {
   background: none;
   border: none;
   color: var(--faint);
   font-size: 12px;
-  margin-top: 10px;
   cursor: pointer;
+  padding: 0;
 }
 .empty {
   text-align: center;
@@ -1083,6 +1109,34 @@ body.brew-pour .instruction .it b {
 .toast.show {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
+}
+
+/* modal de confirmación (ej. ¿marcar favorita?) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000a;
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 22px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 12px 40px #000a;
+}
+.modal-msg {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--cream);
+  margin-bottom: 18px;
 }
 
 .hide {

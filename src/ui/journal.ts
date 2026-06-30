@@ -3,6 +3,7 @@
 // puente entre el formulario de FIN (que escribe) y JournalScreen (que lee).
 
 import type { BrewSuggestion } from "../engine/brewSuggestion";
+import type { RecipeId } from "../engine/recipes";
 
 const STORAGE_KEY = "brewlab:journal";
 
@@ -23,7 +24,8 @@ export const TASTE_OPTS = [
 export interface JournalEntry {
   id: number;
   date: string; // ISO
-  recipe: string; // nombre de la receta
+  recipe: string; // nombre de la receta (para mostrar)
+  recipeId?: RecipeId; // id para reconstruir la receta al repetir (H8)
   coffee: number; // g de café
   water: number; // g de agua
   time: string; // mm:ss real transcurrido

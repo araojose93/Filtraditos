@@ -33,6 +33,13 @@ describe("searchCoffeeBags (pura)", () => {
   });
 });
 
+const bag1 = (extra?: Partial<CoffeeBag>): CoffeeBag => ({
+  id: "b1",
+  name: "Geisha Lavado",
+  brand: "Nakama Café",
+  ...extra,
+});
+
 describe("getBestEntryForBag (pura)", () => {
   it("retorna la cata de mayor rating vinculada a la ficha", () => {
     const entries: TestEntry[] = [
@@ -41,7 +48,7 @@ describe("getBestEntryForBag (pura)", () => {
       { id: 3, date: "2026-01-03T10:00:00Z", rating: 4, coffeeBagId: "b1" },
       { id: 4, date: "2026-01-04T10:00:00Z", rating: 5, coffeeBagId: "otra" },
     ];
-    expect(getBestEntryForBag("b1", entries)?.id).toBe(2);
+    expect(getBestEntryForBag(bag1(), entries)?.id).toBe(2);
   });
 
   it("con empate de rating retorna la más reciente", () => {
@@ -49,7 +56,7 @@ describe("getBestEntryForBag (pura)", () => {
       { id: 1, date: "2026-01-01T10:00:00Z", rating: 5, coffeeBagId: "b1" },
       { id: 2, date: "2026-03-01T10:00:00Z", rating: 5, coffeeBagId: "b1" },
     ];
-    expect(getBestEntryForBag("b1", entries)?.id).toBe(2);
+    expect(getBestEntryForBag(bag1(), entries)?.id).toBe(2);
   });
 
   it("sin catas vinculadas retorna undefined", () => {
@@ -57,6 +64,22 @@ describe("getBestEntryForBag (pura)", () => {
       { id: 1, date: "2026-01-01T10:00:00Z", rating: 5, coffeeBagId: "otra" },
       { id: 2, date: "2026-01-02T10:00:00Z", rating: 4 },
     ];
-    expect(getBestEntryForBag("b1", entries)).toBeUndefined();
+    expect(getBestEntryForBag(bag1(), entries)).toBeUndefined();
+  });
+
+  it("favoriteEntryId apunta a una de rating 3, habiendo una de 5 → gana la marcada", () => {
+    const entries: TestEntry[] = [
+      { id: 1, date: "2026-01-01T10:00:00Z", rating: 3, coffeeBagId: "b1" },
+      { id: 2, date: "2026-01-02T10:00:00Z", rating: 5, coffeeBagId: "b1" },
+    ];
+    expect(getBestEntryForBag(bag1({ favoriteEntryId: "1" }), entries)?.id).toBe(1);
+  });
+
+  it("favoriteEntryId apunta a una cata que ya no existe → cae a mayor rating", () => {
+    const entries: TestEntry[] = [
+      { id: 1, date: "2026-01-01T10:00:00Z", rating: 3, coffeeBagId: "b1" },
+      { id: 2, date: "2026-01-02T10:00:00Z", rating: 5, coffeeBagId: "b1" },
+    ];
+    expect(getBestEntryForBag(bag1({ favoriteEntryId: "999" }), entries)?.id).toBe(2);
   });
 });

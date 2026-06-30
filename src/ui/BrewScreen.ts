@@ -9,9 +9,9 @@
 // drawdown real (depende de molienda/dosis/tueste), así que lo decide el
 // usuario.
 
-import { buildRecipe, type RecipeId } from "../engine/recipes";
+import { buildRecipe, recipeBuilders, type RecipeId } from "../engine/recipes";
 import { getBrewState, type BrewState } from "../engine/brewEngine";
-import { getGrindClick } from "../engine/grinder";
+import { getGrindClick, adjustGrindClick } from "../engine/grinder";
 import type { Recipe } from "../engine/types";
 import { RecipeSelector, RECIPE_META } from "./RecipeSelector";
 import { WaterScreen } from "./WaterScreen";
@@ -115,7 +115,10 @@ export class BrewScreen {
   private showJournal(): void {
     this.mode = "journal";
     document.body.classList.remove("brew-pour", "brew-wait");
-    const journal = new JournalScreen({ onBack: () => this.showSetup() });
+    const journal = new JournalScreen({
+      onBack: () => this.showSetup(),
+      onRepeat: (entry) => this.repeatFromEntry(entry, true),
+    });
     this.mount(journal.el);
   }
 
@@ -124,8 +127,34 @@ export class BrewScreen {
   private showCoffeeBags(): void {
     this.mode = "coffeebags";
     document.body.classList.remove("brew-pour", "brew-wait");
-    const bags = new CoffeeBagsScreen({ onBack: () => this.showSetup() });
+    const bags = new CoffeeBagsScreen({
+      onBack: () => this.showSetup(),
+      onPrepareRecipe: (entry) => this.repeatFromEntry(entry, false),
+    });
     this.mount(bags.el);
+  }
+
+  // ── REPETIR un brew desde una entrada de bitácora (H8) ──
+
+  private repeatFromEntry(entry: JournalEntry, applyAdjust: boolean): void {
+    const recipeId = resolveRecipeId(entry);
+    if (!recipeId) return; // receta desconocida: no se puede repetir
+
+    let clickOverride: number | undefined;
+    if (applyAdjust) {
+      const dir = entry.suggestion?.direction;
+      // Solo molienda; "revisar_temperatura" no ajusta clics.
+      if (dir === "mas_fino" || dir === "mas_grueso") {
+        const used = parseUsedClick(entry.grind);
+        if (used !== null) {
+          const total = loadProfile().grinderClicks;
+          const delta = dir === "mas_fino" ? -1 : 1;
+          clickOverride = adjustGrindClick(used, delta, total);
+        }
+      }
+    }
+
+    this.showPrep(recipeId, { dose: entry.coffee, clickOverride });
   }
 
   // ── AGUA (temperatura en vivo) ─────────────────────────
@@ -148,13 +177,16 @@ export class BrewScreen {
 
   // ── PREP (dosis + checklist "Monta el setup", port de s-prep) ──
 
-  private showPrep(recipeId: RecipeId): void {
+  private showPrep(
+    recipeId: RecipeId,
+    opts: { dose?: number; clickOverride?: number } = {}
+  ): void {
     this.mode = "prep";
     document.body.classList.remove("brew-pour", "brew-wait");
 
     const DOSE_MIN = 10;
     const DOSE_MAX = 30;
-    let dose = 15;
+    let dose = clamp(opts.dose ?? 15, DOSE_MIN, DOSE_MAX);
     const recipe = buildRecipe(recipeId, dose); // para el nombre/ratio fijos
 
     const section = document.createElement("section");
@@ -198,7 +230,9 @@ export class BrewScreen {
     const update = (): void => {
       const r = buildRecipe(recipeId, dose);
       const profile = loadProfile();
-      const click = getGrindClick(profile, r.recommendedClickOffset);
+      // clic precargado (repetir con ajuste) o el del perfil. No depende de
+      // la dosis, así que se mantiene fijo al cambiarla.
+      const click = opts.clickOverride ?? getGrindClick(profile, r.recommendedClickOffset);
       const grind = RECIPE_META[recipeId].grind;
       q("sumWater").textContent = `${Math.round(getBrewState(r, dose, 0).totalWater)} g`;
 
@@ -591,6 +625,7 @@ export class BrewScreen {
       id: Date.now(),
       date: new Date().toISOString(),
       recipe: recipe.name,
+      recipeId: recipe.id as RecipeId,
       coffee: this.dose,
       water: Math.round(this.dose * recipe.ratio),
       time: formatClock(this.finishElapsed),
@@ -604,7 +639,33 @@ export class BrewScreen {
 
     addEntry(entry);
     if (suggestion) showToast(`💡 ${suggestion.reason}`);
+
+    // 5 estrellas + café vinculado → ofrecer marcarla como favorita.
+    if (this.rating === 5 && coffeeBagId) {
+      this.offerFavorite(entry.id, coffeeBagId);
+      return; // offerFavorite vuelve a SETUP al resolver el modal
+    }
     this.cancelBrew(); // limpia y vuelve a SETUP
+  }
+
+  /** Modal "¿hacerla tu favorita?" tras guardar una cata de 5 estrellas. */
+  private offerFavorite(entryId: number, bagId: string): void {
+    const bag = loadCoffeeBags().find((b) => b.id === bagId);
+    const name = bag?.name ?? "este café";
+    showModal({
+      message: `⭐ ¡5 estrellas! ¿Quieres hacerla tu preparación favorita de ${name}?`,
+      yesLabel: "Sí, marcar",
+      noLabel: "No, gracias",
+      onYes: () => {
+        const fresh = loadCoffeeBags().find((b) => b.id === bagId);
+        if (fresh) {
+          fresh.favoriteEntryId = String(entryId);
+          saveCoffeeBag(fresh);
+        }
+        this.cancelBrew();
+      },
+      onNo: () => this.cancelBrew(),
+    });
   }
 
   // ── Wake Lock (mantener pantalla encendida) ────────────
@@ -661,6 +722,50 @@ export function recipeTotalDuration(recipe: Recipe): number {
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
+}
+
+/** Resuelve el RecipeId de una entrada: por id guardado o, si falta (entradas
+ *  viejas), buscando por nombre en el catálogo. null si no se reconoce. */
+function resolveRecipeId(entry: JournalEntry): RecipeId | null {
+  if (entry.recipeId && entry.recipeId in recipeBuilders) return entry.recipeId;
+  for (const id of Object.keys(recipeBuilders) as RecipeId[]) {
+    if (buildRecipe(id, 15).name === entry.recipe) return id;
+  }
+  return null;
+}
+
+/** Extrae el número de clic de un texto "clic N de M". null si no hay número. */
+function parseUsedClick(grind: string): number | null {
+  const m = grind.match(/clic\s+(\d+)/i);
+  return m ? Number(m[1]) : null;
+}
+
+/** Modal de confirmación a nivel de body (sí/no). Bloquea hasta resolver. */
+function showModal(opts: {
+  message: string;
+  yesLabel: string;
+  noLabel: string;
+  onYes: () => void;
+  onNo: () => void;
+}): void {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal">
+      <p class="modal-msg">${opts.message}</p>
+      <div class="btn-row">
+        <button class="btn ghost" data-no>${opts.noLabel}</button>
+        <button class="btn primary" data-yes>${opts.yesLabel}</button>
+      </div>
+    </div>`;
+  document.body.append(overlay);
+
+  const close = (cb: () => void) => {
+    overlay.remove();
+    cb();
+  };
+  overlay.querySelector<HTMLElement>("[data-yes]")!.addEventListener("click", () => close(opts.onYes));
+  overlay.querySelector<HTMLElement>("[data-no]")!.addEventListener("click", () => close(opts.onNo));
 }
 
 /**

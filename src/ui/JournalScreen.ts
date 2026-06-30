@@ -6,6 +6,8 @@ import { loadJournal, deleteEntry, type JournalEntry } from "./journal";
 
 export interface JournalScreenOptions {
   onBack: () => void;
+  /** Repetir un brew clonando la entrada (con ajuste de molienda si la hay). */
+  onRepeat: (entry: JournalEntry) => void;
 }
 
 export class JournalScreen {
@@ -50,13 +52,21 @@ export class JournalScreen {
     }
 
     this.listEl.innerHTML = list
-      .map((en) => entryCardHtml(en, { withDelete: true }))
+      .map((en) => entryCardHtml(en, { withDelete: true, withRepeat: true }))
       .join("");
 
     this.listEl.querySelectorAll<HTMLElement>(".del").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = Number(btn.dataset.id);
         this.renderList(deleteEntry(id));
+      });
+    });
+
+    this.listEl.querySelectorAll<HTMLElement>(".repeat").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = Number(btn.dataset.id);
+        const entry = list.find((e) => e.id === id);
+        if (entry) this.opts.onRepeat(entry);
       });
     });
   }
@@ -75,7 +85,12 @@ export class JournalScreen {
  */
 export function entryCardHtml(
   en: JournalEntry,
-  opts: { withDelete?: boolean } = {}
+  opts: {
+    withDelete?: boolean;
+    withRepeat?: boolean;
+    withFavorite?: boolean;
+    currentFavoriteId?: string;
+  } = {}
 ): string {
   const d = new Date(en.date);
   const fecha =
@@ -109,9 +124,24 @@ export function entryCardHtml(
     ? `<div class="esugg">💡 ${escapeHtml(en.suggestion.reason)}</div>`
     : "";
 
+  const adjust =
+    en.suggestion?.direction === "mas_fino" ||
+    en.suggestion?.direction === "mas_grueso";
+  const repeat = opts.withRepeat
+    ? `<button class="repeat" data-id="${en.id}">↻ ${adjust ? "Repetir con ajuste" : "Repetir"}</button>`
+    : "";
+  const fav = opts.withFavorite
+    ? String(en.id) === opts.currentFavoriteId
+      ? `<span class="favmark">★ Favorita</span>`
+      : `<button class="markfav" data-id="${en.id}">★ Marcar como favorita</button>`
+    : "";
   const del = opts.withDelete
     ? `<button class="del" data-id="${en.id}">eliminar</button>`
     : "";
+  const actions =
+    repeat || fav || del
+      ? `<div class="eactions">${repeat}${fav}${del}</div>`
+      : "";
 
   return `
     <div class="entry">
@@ -126,7 +156,7 @@ export function entryCardHtml(
       ${tastes}
       ${notes}
       ${sugg}
-      ${del}
+      ${actions}
     </div>`;
 }
 
