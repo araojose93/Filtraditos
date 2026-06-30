@@ -35,12 +35,16 @@ después.** La UI (`src/ui/`) solo lee `BrewState` y pinta — no decide nada.
 ## Estructura
 ```
 src/
-  engine/         <- lógica pura, testeada. NO importa nada de UI.
+  engine/             <- lógica pura, testeada. NO importa nada de UI.
     types.ts
     brewEngine.ts
     brewEngine.test.ts
-    recipes.ts    <- (pendiente) catálogo de recetas tipadas
-  ui/             <- componentes / render. Solo consume el engine.
+    recipes.ts        <- catálogo de recetas tipadas (escala agua por dosis)
+    grinder.ts        <- perfil de molino por clics (H3)
+    grinder.test.ts
+    temperature.ts    <- estimación de temperatura Newton (H4)
+    temperature.test.ts
+  ui/                 <- componentes / render. Solo consume el engine.
 agents/
   CASCARA.md
   GUSTAVITO.md
@@ -67,11 +71,12 @@ npm run dev      # levanta la app en local
 ```
 
 ## Estado actual / próximos pasos sugeridos
-1. ✅ Engine de vertido/espera con tests (este commit).
-2. ⬜ Migrar el catálogo de recetas (Fácil, Hoffmann, Kasuya) a
+1. ✅ Engine de vertido/espera con tests.
+2. ✅ Catálogo de recetas (Fácil, Hoffmann, Kasuya) en
    `src/engine/recipes.ts` tipado con `Recipe`.
-3. ⬜ Portar la UI del prototipo HTML a componentes que consuman
-   `getBrewState()` en vez de la lógica vieja mezclada.
-4. ⬜ "Confirmar peso real" + diagnóstico desde la cata (sugerencia de
-   CASCARA, ver backlog de producto).
-5. ⬜ Wrap con Capacitor para Android nativo.
+3. ✅ Perfil de molino por clics (`src/engine/grinder.ts`).
+4. ✅ Estimación de temperatura Newton (`src/engine/temperature.ts`).
+5. ⬜ UI: portar interfaz consumiendo `getBrewState()` en vez de la lógica
+   vieja mezclada.
+6. ⬜ Bitácora de catas (H5).
+7. ⬜ Wrap con Capacitor para Android nativo.
