@@ -382,6 +382,104 @@ h2 {
   color: var(--cream);
 }
 
+/* ── botón de agua (variante) + tab en SETUP ── */
+.btn.water {
+  background: linear-gradient(180deg, var(--water-soft), var(--water));
+  color: #08171c;
+  box-shadow: 0 8px 22px #7fb0c440;
+}
+.watertab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid #7fb0c440;
+  color: var(--water);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 99px;
+  cursor: pointer;
+}
+.watertab:active {
+  transform: scale(0.97);
+}
+
+/* ── pestaña de Agua (port de s-water) ── */
+.note {
+  font-size: 12px;
+  color: var(--faint);
+  line-height: 1.5;
+  background: #7fb0c40a;
+  border: 1px solid #7fb0c422;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.note b {
+  color: var(--water-soft);
+}
+.tempdial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 240px;
+  height: 240px;
+  margin: 6px auto 8px;
+}
+.tempdial svg {
+  transform: rotate(-90deg);
+  position: absolute;
+  inset: 0;
+}
+.td-bg {
+  stroke: var(--line);
+}
+.td-fg {
+  stroke: url(#gt);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s linear;
+}
+.tempcenter {
+  text-align: center;
+  z-index: 2;
+}
+.tempcenter .tnum {
+  font-family: var(--mono);
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--cream);
+}
+.tempcenter .tnum .unit {
+  font-size: 20px;
+  color: var(--muted);
+}
+.tempcenter .tstate {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--water);
+  margin-top: 6px;
+}
+.tempcenter .teta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+/* color por estado (ideal=agua, bajando=ámbar, fría=coral) */
+.s-ideal {
+  color: var(--water) !important;
+}
+.s-bajando {
+  color: var(--amber) !important;
+}
+.s-fria {
+  color: var(--coral) !important;
+}
+
 /* ── brew ── */
 .brewtop {
   display: flex;

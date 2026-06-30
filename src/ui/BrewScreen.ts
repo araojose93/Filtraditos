@@ -14,6 +14,7 @@ import { getBrewState, type BrewState } from "../engine/brewEngine";
 import { getGrindClick } from "../engine/grinder";
 import type { Recipe, EquipmentProfile } from "../engine/types";
 import { RecipeSelector, RECIPE_META } from "./RecipeSelector";
+import { WaterScreen } from "./WaterScreen";
 
 /** Cada cuánto refrescamos la vista (ms). El reloj real es Date.now(). */
 const TICK_MS = 250;
@@ -28,7 +29,7 @@ const RING_CIRC = 2 * Math.PI * RING_R;
  */
 const DEFAULT_PROFILE: EquipmentProfile = { grinderClicks: 6, baseClick: 4 };
 
-type Mode = "setup" | "prep" | "brewing";
+type Mode = "setup" | "prep" | "brewing" | "water";
 
 interface BrewRefs {
   live: HTMLElement;
@@ -80,8 +81,18 @@ export class BrewScreen {
     document.body.classList.remove("brew-pour", "brew-wait");
     const selector = new RecipeSelector({
       onStart: (recipeId, doseGrams) => this.showPrep(recipeId, doseGrams),
+      onWater: () => this.showWater(),
     });
     this.mount(selector.el);
+  }
+
+  // ── AGUA (temperatura en vivo) ─────────────────────────
+
+  private showWater(): void {
+    this.mode = "water";
+    document.body.classList.remove("brew-pour", "brew-wait");
+    const water = new WaterScreen({ onBack: () => this.showSetup() });
+    this.mount(water.el);
   }
 
   // ── PREP (checklist "Monta el setup", port de s-prep) ──

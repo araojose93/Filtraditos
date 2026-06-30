@@ -38,6 +38,8 @@ export const RECIPE_META: Record<
 
 export interface RecipeSelectorOptions {
   onStart: (recipeId: RecipeId, doseGrams: number) => void;
+  /** Navega a la pestaña de Agua (temperatura). */
+  onWater: () => void;
 }
 
 export class RecipeSelector {
@@ -64,6 +66,10 @@ export class RecipeSelector {
         <div class="dot"></div>
         <h1>Brew<b>Lab</b></h1>
         <span class="tag">V60</span>
+        <button class="watertab" id="waterTab">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s6 7 6 11a6 6 0 01-12 0c0-4 6-11 6-11z"/></svg>
+          Agua
+        </button>
       </div>
 
       <div class="eyebrow">Tu laboratorio</div>
@@ -111,6 +117,7 @@ export class RecipeSelector {
     this.byId("startBtn").addEventListener("click", () => {
       this.opts.onStart(this.recipeId, this.dose);
     });
+    this.byId("waterTab").addEventListener("click", () => this.opts.onWater());
   }
 
   private renderCards(): void {
