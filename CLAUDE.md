@@ -71,6 +71,9 @@ npm run dev      # levanta la app en local
 ```
 
 ## Estado actual / próximos pasos sugeridos
+> **V1 completa** — H1 a H9 implementadas y probadas (53 tests).
+> Pendiente: empaque nativo (Capacitor) y periodo de prueba con uso real.
+
 1. ✅ Engine de vertido/espera con tests.
 2. ✅ Catálogo de recetas (Fácil, Hoffmann, Kasuya) en
    `src/engine/recipes.ts` tipado con `Recipe`.
@@ -86,6 +89,6 @@ npm run dev      # levanta la app en local
     sugerir clic más fino).
 11. ✅ H8 — Repetir brew con ajuste de molienda (desde bitácora o
     favorita) + favorita manual por ficha de café.
-12. ⬜ H9 — Confirmar peso real vertido al cerrar cada vertido.
+12. ✅ H9 — Confirmar peso real vertido + indicador de desviación.
 13. ⬜ Wrap con Capacitor para Android (Wake Lock web → plugin nativo,
-    vibración → haptics nativo).
+    vibración → haptics nativo). Único pendiente del roadmap.
