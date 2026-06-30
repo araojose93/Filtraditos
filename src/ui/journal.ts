@@ -2,7 +2,7 @@
 // Las entradas nuevas van al principio (las más recientes arriba). Es el
 // puente entre el formulario de FIN (que escribe) y JournalScreen (que lee).
 
-import type { GrindSuggestion } from "../engine/grindSuggestion";
+import type { BrewSuggestion } from "../engine/brewSuggestion";
 
 const STORAGE_KEY = "brewlab:journal";
 
@@ -16,6 +16,8 @@ export const TASTE_OPTS = [
   "Cuerpo",
   "Balanceado",
   "Aguado",
+  "Astringente/Seco",
+  "Quemado",
 ] as const;
 
 export interface JournalEntry {
@@ -30,7 +32,7 @@ export interface JournalEntry {
   grind: string;
   notes: string;
   coffeeBagId?: string; // referencia opcional a una CoffeeBag (H6)
-  suggestion?: GrindSuggestion; // ajuste de molienda sugerido al guardar (H7)
+  suggestion?: BrewSuggestion; // sugerencia de ajuste al guardar (H7+)
 }
 
 /** Lista guardada (más recientes primero), o [] si no hay nada / dato inválido. */

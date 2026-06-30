@@ -21,7 +21,7 @@ import { CoffeeBagsScreen } from "./CoffeeBagsScreen";
 import { loadProfile } from "./equipmentProfile";
 import { addEntry, TASTE_OPTS, type JournalEntry } from "./journal";
 import { searchCoffeeBags } from "../engine/coffeeBags";
-import { getGrindSuggestion } from "../engine/grindSuggestion";
+import { getBrewSuggestion } from "../engine/brewSuggestion";
 import { loadCoffeeBags, saveCoffeeBag } from "./coffeeBagsStore";
 
 /** Cada cuánto refrescamos la vista (ms). El reloj real es Date.now(). */
@@ -578,9 +578,10 @@ export class BrewScreen {
       saveCoffeeBag({ id: coffeeBagId, name: this.pendingBagName, brand: "" });
     }
 
-    // Sugerencia de molienda (H7): tiempo real vs el objetivo de la receta
-    // (targetTotalSeconds incluye el drawdown, comparable con finishElapsed).
-    const suggestion = getGrindSuggestion({
+    // Sugerencia de preparación (H7+): tiempo real vs el objetivo de la receta
+    // (targetTotalSeconds incluye el drawdown, comparable con finishElapsed) +
+    // sabores. Puede sugerir molienda o revisar temperatura.
+    const suggestion = getBrewSuggestion({
       actualSeconds: this.finishElapsed,
       expectedSeconds: recipe.targetTotalSeconds,
       tastes: [...this.tastes],
