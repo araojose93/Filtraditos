@@ -103,9 +103,20 @@ export function entryCardHtml(
       `<span style="color:var(--faint)">${"★".repeat(5 - en.rating)}</span>`
     : "";
 
+  // Agua: si hay peso real y se desvía del planeado más de ±2g (ruido), lo
+  // muestra con la desviación; si coincide (o no se registró), solo el plan.
+  const waterDev =
+    en.actualWater != null ? en.actualWater - en.water : 0;
+  const waterMeta =
+    en.actualWater != null && Math.abs(waterDev) > 2
+      ? `<span>${en.actualWater}g <span class="ewdev">(planeado ${en.water}g, ${
+          waterDev > 0 ? "+" : ""
+        }${waterDev}g)</span></span>`
+      : `<span>${en.water} g agua</span>`;
+
   const meta = [
     `<span>${en.coffee} g café</span>`,
-    `<span>${en.water} g agua</span>`,
+    waterMeta,
     en.time ? `<span>${en.time}</span>` : "",
     en.grind ? `<span>⚙ ${escapeHtml(en.grind)}</span>` : "",
   ].join("");

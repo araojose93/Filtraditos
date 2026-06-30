@@ -27,7 +27,8 @@ export interface JournalEntry {
   recipe: string; // nombre de la receta (para mostrar)
   recipeId?: RecipeId; // id para reconstruir la receta al repetir (H8)
   coffee: number; // g de café
-  water: number; // g de agua
+  water: number; // g de agua planeada (dosis × ratio de la receta)
+  actualWater?: number; // g de agua realmente vertida (H9), opcional
   time: string; // mm:ss real transcurrido
   rating: number; // 1-5 (0 = sin calificar)
   tastes: string[];

@@ -63,6 +63,7 @@ interface BrewRefs {
   doneTime: HTMLElement;
   starsF: HTMLElement;
   tastesF: HTMLElement;
+  actualWaterF: HTMLInputElement;
   grindF: HTMLInputElement;
   notesF: HTMLTextAreaElement;
   bagF: HTMLInputElement;
@@ -444,6 +445,11 @@ export class BrewScreen {
 
         <div class="field"><label>¿Qué tal quedó?</label><div class="stars" id="starsF"></div></div>
         <div class="field"><label>Perfil de sabor</label><div class="tastes" id="tastesF"></div></div>
+        <div class="field">
+          <label>Agua real vertida (g)</label>
+          <input id="actualWaterF" type="number" inputmode="numeric" min="0" step="1">
+          <p class="field-help">Tu pulso real, no el plan — esto ayuda a calibrar mejor con el tiempo.</p>
+        </div>
         <div class="field"><label>Punto del molino</label><input id="grindF" placeholder="ej. clic 4 de 6"></div>
         <div class="field">
           <label>Café (opcional)</label>
@@ -496,6 +502,7 @@ export class BrewScreen {
       doneTime: q<HTMLElement>("doneTime"),
       starsF: q<HTMLElement>("starsF"),
       tastesF: q<HTMLElement>("tastesF"),
+      actualWaterF: q<HTMLInputElement>("actualWaterF"),
       grindF: q<HTMLInputElement>("grindF"),
       notesF: q<HTMLTextAreaElement>("notesF"),
       bagF: q<HTMLInputElement>("bagF"),
@@ -514,6 +521,9 @@ export class BrewScreen {
     const profile = loadProfile();
     const click = getGrindClick(profile, recipe.recommendedClickOffset);
     this.refs.grindF.value = `clic ${click} de ${profile.grinderClicks}`;
+    // Prellena con el agua planeada (dosis × ratio): el usuario solo lo toca si
+    // vertió distinto. Mismo valor que el statgrid de FIN.
+    this.refs.actualWaterF.value = String(Math.round(this.dose * recipe.ratio));
     this.renderStars();
     this.renderTastes();
     this.refs.bagF.addEventListener("input", () => this.renderBagSuggestions());
@@ -636,6 +646,12 @@ export class BrewScreen {
     };
     if (coffeeBagId) entry.coffeeBagId = coffeeBagId;
     if (suggestion) entry.suggestion = suggestion;
+
+    // Agua real vertida (H9): solo si es un número válido ≥ 0.
+    const actual = Number(this.refs!.actualWaterF.value);
+    if (this.refs!.actualWaterF.value.trim() !== "" && Number.isFinite(actual) && actual >= 0) {
+      entry.actualWater = Math.round(actual);
+    }
 
     addEntry(entry);
     if (suggestion) showToast(`💡 ${suggestion.reason}`);

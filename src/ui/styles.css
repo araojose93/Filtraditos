@@ -353,6 +353,17 @@ h2 {
   line-height: 1.45;
   margin-top: 8px;
 }
+/* Ayuda bajo un campo del formulario (ej. agua real vertida). */
+.field-help {
+  font-size: 12px;
+  color: var(--faint);
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+/* Desviación de agua real vs planeada en la tarjeta de bitácora. */
+.ewdev {
+  color: var(--faint);
+}
 
 /* push primario al fondo en pantallas de columna */
 .spacer {
