@@ -82,9 +82,10 @@ npm run dev      # levanta la app en local
 7. ✅ H4 en UI (pestaña de Agua, temperatura en vivo).
 8. ✅ H5 — Bitácora de catas (formulario + lista + persistencia).
 9. ✅ H6 — Ficha de café (búsqueda + preparación favorita).
-10. ⬜ H7 — Sugerencia automática de ajuste (ácido + colado rápido →
+10. ✅ H7 — Sugerencia automática de ajuste (ácido + colado rápido →
     sugerir clic más fino).
-11. ⬜ H8 — Repetir brew con 1 clic de diferencia desde una entrada.
+11. ✅ H8 — Repetir brew con ajuste de molienda (desde bitácora o
+    favorita) + favorita manual por ficha de café.
 12. ⬜ H9 — Confirmar peso real vertido al cerrar cada vertido.
 13. ⬜ Wrap con Capacitor para Android (Wake Lock web → plugin nativo,
     vibración → haptics nativo).
