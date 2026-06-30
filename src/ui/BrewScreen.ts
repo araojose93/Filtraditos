@@ -12,9 +12,11 @@
 import { buildRecipe, type RecipeId } from "../engine/recipes";
 import { getBrewState, type BrewState } from "../engine/brewEngine";
 import { getGrindClick } from "../engine/grinder";
-import type { Recipe, EquipmentProfile } from "../engine/types";
+import type { Recipe } from "../engine/types";
 import { RecipeSelector, RECIPE_META } from "./RecipeSelector";
 import { WaterScreen } from "./WaterScreen";
+import { ProfileScreen } from "./ProfileScreen";
+import { loadProfile } from "./equipmentProfile";
 
 /** Cada cuánto refrescamos la vista (ms). El reloj real es Date.now(). */
 const TICK_MS = 250;
@@ -22,14 +24,7 @@ const TICK_MS = 250;
 const RING_R = 124;
 const RING_CIRC = 2 * Math.PI * RING_R;
 
-/**
- * Perfil de molino por defecto mientras la pantalla de Perfil (H3) llega en
- * Sprint 3b. baseClick 4 sobre 6 ≈ molienda media para V60. El clic real de
- * cada receta sale de getGrindClick(perfil, recommendedClickOffset).
- */
-const DEFAULT_PROFILE: EquipmentProfile = { grinderClicks: 6, baseClick: 4 };
-
-type Mode = "setup" | "prep" | "brewing" | "water";
+type Mode = "setup" | "prep" | "brewing" | "water" | "profile";
 
 interface BrewRefs {
   live: HTMLElement;
@@ -82,6 +77,7 @@ export class BrewScreen {
     const selector = new RecipeSelector({
       onStart: (recipeId, doseGrams) => this.showPrep(recipeId, doseGrams),
       onWater: () => this.showWater(),
+      onProfile: () => this.showProfile(),
     });
     this.mount(selector.el);
   }
@@ -95,6 +91,15 @@ export class BrewScreen {
     this.mount(water.el);
   }
 
+  // ── PERFIL (molino por clics) ──────────────────────────
+
+  private showProfile(): void {
+    this.mode = "profile";
+    document.body.classList.remove("brew-pour", "brew-wait");
+    const profile = new ProfileScreen({ onBack: () => this.showSetup() });
+    this.mount(profile.el);
+  }
+
   // ── PREP (checklist "Monta el setup", port de s-prep) ──
 
   private showPrep(recipeId: RecipeId, doseGrams: number): void {
@@ -102,12 +107,13 @@ export class BrewScreen {
     document.body.classList.remove("brew-pour", "brew-wait");
 
     const recipe = buildRecipe(recipeId, doseGrams);
-    const click = getGrindClick(DEFAULT_PROFILE, recipe.recommendedClickOffset);
+    const profile = loadProfile();
+    const click = getGrindClick(profile, recipe.recommendedClickOffset);
     const grind = RECIPE_META[recipeId].grind;
 
     // Pasos generados con datos reales (dosis, clic del engine), no texto fijo.
     const steps = [
-      `Muele <b>${doseGrams} g</b> en <b>clic ~${click} de ${DEFAULT_PROFILE.grinderClicks}</b> (${grind}).`,
+      `Muele <b>${doseGrams} g</b> en <b>clic ~${click} de ${profile.grinderClicks}</b> (${grind}).`,
       `Pon el filtro en la V60.`,
       `Pasa el agua a la <b>gooseneck</b>.`,
       `<b>Enjuaga el filtro</b> con agua caliente (quita el sabor a papel y calienta la V60).`,

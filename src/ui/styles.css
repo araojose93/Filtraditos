@@ -405,6 +405,23 @@ h2 {
 .watertab:active {
   transform: scale(0.97);
 }
+.equiptab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid #e0883c40;
+  color: var(--amber);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 99px;
+  cursor: pointer;
+}
+.equiptab:active {
+  transform: scale(0.97);
+}
 
 /* ── pestaña de Agua (port de s-water) ── */
 .note {

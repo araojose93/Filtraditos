@@ -5,7 +5,9 @@
 
 import { buildRecipe, type RecipeId } from "../engine/recipes";
 import { getBrewState } from "../engine/brewEngine";
+import { getGrindClick } from "../engine/grinder";
 import { recipeTotalDuration, formatClock } from "./BrewScreen";
+import { loadProfile } from "./equipmentProfile";
 
 const DOSE_MIN = 10;
 const DOSE_MAX = 30;
@@ -40,6 +42,8 @@ export interface RecipeSelectorOptions {
   onStart: (recipeId: RecipeId, doseGrams: number) => void;
   /** Navega a la pestaña de Agua (temperatura). */
   onWater: () => void;
+  /** Navega a la pantalla de Perfil de equipo (molino). */
+  onProfile: () => void;
 }
 
 export class RecipeSelector {
@@ -66,6 +70,10 @@ export class RecipeSelector {
         <div class="dot"></div>
         <h1>Brew<b>Lab</b></h1>
         <span class="tag">V60</span>
+        <button class="equiptab" id="profileTab">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          Mi equipo
+        </button>
         <button class="watertab" id="waterTab">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s6 7 6 11a6 6 0 01-12 0c0-4 6-11 6-11z"/></svg>
           Agua
@@ -98,6 +106,7 @@ export class RecipeSelector {
         <div class="summary">
           <div class="w">Agua total<b id="sumWater">—</b></div>
           <div>Ratio<b id="sumRatio">—</b></div>
+          <div>Molino<b id="sumGrind">—</b></div>
         </div>
       </div>
 
@@ -118,6 +127,7 @@ export class RecipeSelector {
       this.opts.onStart(this.recipeId, this.dose);
     });
     this.byId("waterTab").addEventListener("click", () => this.opts.onWater());
+    this.byId("profileTab").addEventListener("click", () => this.opts.onProfile());
   }
 
   private renderCards(): void {
@@ -159,8 +169,10 @@ export class RecipeSelector {
 
   private updateSummary(): void {
     const recipe = buildRecipe(this.recipeId, this.dose);
+    const click = getGrindClick(loadProfile(), recipe.recommendedClickOffset);
     this.byId("sumWater").textContent = `${Math.round(this.totalWater())} g`;
     this.byId("sumRatio").textContent = `1:${recipe.ratio}`;
+    this.byId("sumGrind").textContent = `clic ${click}`;
   }
 
   private byId(id: string): HTMLElement {
