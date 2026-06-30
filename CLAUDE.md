@@ -78,7 +78,9 @@ npm run dev      # levanta la app en local
 4. ✅ Estimación de temperatura Newton (`src/engine/temperature.ts`).
 5. ✅ UI de brew (SETUP → prep → cronómetro guiado → finalizar manual),
    consumiendo `getBrewState()` en vez de la lógica vieja mezclada.
-6. ⬜ Exponer H3 (molino) y H4 (temperatura) en la UI — hoy solo viven en
-   el engine, la pantalla de SETUP no las muestra.
-7. ⬜ Bitácora de catas (H5).
-8. ⬜ Wrap con Capacitor para Android nativo.
+6. ✅ H3 en UI (Perfil de molino, ⚙️ Mi equipo).
+7. ✅ H4 en UI (pestaña de Agua, temperatura en vivo).
+8. ⬜ Bitácora de catas (H5) — registro de cada preparación: estrellas,
+   perfil de sabor, punto de molino usado, notas.
+9. ⬜ Wrap con Capacitor para Android (Wake Lock web → plugin nativo,
+   vibración → haptics nativo).
